@@ -13,7 +13,11 @@ import plotly.graph_objects as go
 
 from collections import defaultdict
 
-data = pd.read_csv('/Users/ryanjuricic/dev/Coke_v_Pepsi/Complete_Dataset.csv')
+# Creating file path for the data - maps from github
+data_path = 'data/Complete_Dataset.csv'
+
+# Loading in data
+data = pd.read_csv(data_path)
 
 def create_bootstrapped_distribution(df, num_reps):
     # Use pandas' sample method to generate all bootstraps at once
