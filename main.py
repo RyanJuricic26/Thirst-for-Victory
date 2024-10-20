@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 from collections import defaultdict
 
 # Creating file path for the data - maps from github
-data_path = 'data/Complete_Dataset.csv'
+data_path = 'Data/Complete_Dataset.csv'
 
 # Loading in data
 data = pd.read_csv(data_path)
