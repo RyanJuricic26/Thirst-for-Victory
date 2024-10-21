@@ -5,13 +5,9 @@
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-
-from collections import defaultdict
 
 # Creating file path for the data - maps from github
 data_path = 'Data/Complete_Dataset.csv'
@@ -25,27 +21,21 @@ bootstrap_dist_path = 'Data/Bootstrapped_Distribution.npy'
 # Loading the distribution
 bootstrap_means = np.load(bootstrap_dist_path)
 
-def create_bootstrapped_distribution(df, num_reps):
-    # Use pandas' sample method to generate all bootstraps at once
-    # Reshape so each row is one bootstrap sample
-    bootstrapped_samples = df['SEED'].sample(n=len(df) * num_reps, replace=True, random_state=42).values.reshape(
-        num_reps, -1)
-
-    # Calculate the mean of each bootstrap sample
-    bootstrapped_means = np.mean(bootstrapped_samples, axis=1)
-
-    return bootstrapped_means
+# Caching the filtered data
+@st.cache_data
+def get_playoff_data(sponsor):
+    return data[(data['SPONSOR'] == sponsor) & (data['SEED'] > 0)]
 
 def display_bootstrapped_distribution(dist, avg_pepsi_seed, conf_int=95):
-    # FINISH
-    excess = 100-conf_int
-    left_value = 0 + (excess/2)
-    right_value = 100 - (excess/2)
-    left_interval_endpoint = np.percentile(dist, left_value)
-    right_interval_endpoint = np.percentile(dist, right_value)
-    interval = np.array([left_interval_endpoint, right_interval_endpoint])
+    # Validate confidence interval
+    if not (0 < conf_int < 100):
+        raise ValueError("conf_int must be between 0 and 100")
 
-    int_title = [round(interval[0], 2), round(interval[1], 2)]
+    left_interval_endpoint = np.percentile(dist, ((100-conf_int)/2))
+    right_interval_endpoint = np.percentile(dist, 100 - ((100-conf_int) / 2))
+
+    # Prepare titles for display
+    int_title = round(left_interval_endpoint, 2), round(right_interval_endpoint, 2)
 
     # Create the histogram for bootstrap_means using Plotly
     fig = go.Figure()
@@ -60,11 +50,11 @@ def display_bootstrapped_distribution(dist, avg_pepsi_seed, conf_int=95):
 
     # Add confidence interval (as a line or a bar)
     fig.add_trace(go.Scatter(
-        x=interval,
+        x=[left_interval_endpoint, right_interval_endpoint],
         y=[0, 0],  # y-values are zero because it's a horizontal line
         mode='lines',
         line=dict(color='yellow', width=10),
-        name=f'{conf_int}% Confidence Interval: {int_title}'
+        name=f'{conf_int}% Confidence Interval: [{int_title[0]}, {int_title[1]}]'
     ))
 
     # Add vertical line for avg_pepsi_seed
@@ -95,70 +85,66 @@ def display_bootstrapped_distribution(dist, avg_pepsi_seed, conf_int=95):
     # Show the figure
     st.plotly_chart(fig)
 
-def display_bev_pie_chart(season):
+# Function to load and filter data, with caching
+@st.cache_data
+def load_filtered_data(year):
+    # Assuming `data` is your full dataset, filter it by the given year
+    return data[data['YEAR'] == year]
+
+def display_bev_pie_chart(season,
+                          rounds=['Round of 68', 'Round of 64', 'Round of 32', 'Sweet 16', 'Elite 8', 'Final 4', 'Final 2', 'Champion'],
+                          custom_colors={'Coke': '#F40000', 'Pepsi': '#0E0E96', 'Dr. Pepper': '#890024', 'BioSteel': '#00FF00'}):
+    """Display a pie chart showing beverage distribution by round for a given season."""
 
     page_title = f'{season} March Madness Beverage Distribution by Round: '
     st.markdown(f"<h3 style='text-align: center; color: white;'>{page_title}</h3>", unsafe_allow_html=True)
-    # st.divider()
 
     # Displaying a message since 2020 did not have a march madness tournament
     if season == '2019-2020':
         st.subheader('Due to Covid Restrictions there was no March Madness tournament.')
         st.write('Please select another season to see more analytics.')
+        return # Exit Early
 
-    else:
-        # Splicing year from season
-        year = int(season[-4:])
+    # Splicing year from season
+    year = int(season[-4:])
 
-        # Creating a temporary dataframe of only that year
-        temp_df = data[data['YEAR'] == year]
+    # Use the cached function to load and filter the data
+    temp_df = load_filtered_data(year)
 
-        # Creating a list of the rounds
-        rounds = ['Round of 68', 'Round of 64', 'Round of 32', 'Sweet 16', 'Elite 8', 'Final 4', 'Final 2', 'Champion']
+    for round_name in rounds:
+        # Filter for the current round
+        round_df = temp_df[temp_df[round_name] > 0]
 
-        # Setting colors for each sponsor
-        custom_colors = {
-            'Coke': '#F40000',  # Coke's main color
-            'Pepsi': '#0E0E96',  # Pepsi's main color
-            'Dr. Pepper': '#890024',  # Dr. Pepper's main color
-            'BioSteel': '#00FF00',  # Green for BioSteel (no easily found color)
-        }
+        # Count the number of occurrences for each sponsor
+        sponsor_counts = (round_df['SPONSOR']
+                          .value_counts()
+                          .reset_index(name='Count')
+                          .rename(columns={'SPONSOR': 'Sponsor'}))
 
-        for round_name in rounds:
+        # Create the pie chart
+        fig = px.pie(sponsor_counts,
+                     values='Count',
+                     names='Sponsor',
+                     title=round_name,
+                     color='Sponsor',
+                     color_discrete_map=custom_colors)
 
-            # Filter for the current round
-            round_df = temp_df[temp_df[round_name] > 0]
+        fig.update_layout(
+            title={
+                'text': round_name,  # Title text
+                'font': {'size': 24}},  # Title font size,
+            legend={
+                'font': {'size': 24}  # Legend font size
+            }
+        ).update_traces(
+            textinfo='percent+label',  # Display both percentage and label
+            textfont_size=20  # Adjust the font size of the percentages and labels
+        )
 
-            # Count the number of occurrences for each sponsor
-            sponsor_counts = round_df['SPONSOR'].value_counts().reset_index()
-            sponsor_counts.columns = ['Sponsor', 'Count']  # Rename columns for clarity
+        # Show the plot
+        st.plotly_chart(fig)
 
-            title = f'{round_name}'
-
-            # Create the pie chart
-            fig = px.pie(sponsor_counts, values='Count', names='Sponsor', title=title,
-                         color='Sponsor', color_discrete_map=custom_colors)
-
-            fig.update_layout(
-                title={
-                    'text': title,  # Title text
-                    'font': {'size': 24},  # Title font size
-                    #'x': 0.5,  # Center the title
-                },
-                legend={
-                    'font': {'size': 24}  # Legend font size
-                }
-            )
-
-            fig.update_traces(
-                textinfo='percent+label',  # Display both percentage and label
-                textfont_size=20  # Adjust the font size of the percentages and labels
-            )
-
-            # Show the plot
-            st.plotly_chart(fig)
-
-            st.divider()
+        st.divider()
 
 
 
@@ -211,7 +197,7 @@ def main():
                  "repeated once again for every school in every year that they made the March Madness tournament. It was "
                  "also expanded on when contracts were made available to display any information we could find for subsequent "
                  "years. ")
-    # Personal info fields
+
     with (tab2):
 
         # Adding a title to this tab
@@ -221,60 +207,20 @@ def main():
         # Adding a subheader to select a season
         st.markdown("<h3 style='text-align: center; color: White;'>Select a season: </h3>", unsafe_allow_html=True)
 
-        # I wanted to add tabs for each year to keep it very clean
-        ssn2014, ssn2015, ssn2016, ssn2017, ssn2018, ssn2019, ssn2020, ssn2021, ssn2022, ssn2023, ssn2024 = st.tabs([
-            "2013-2014", "2014-2015", "2015-2016", "2016-2017", "2017-2018", "2018-2019", "2019-2020", "2020-2021",
-            "2021-2022", "2022-2023", "2023-2024"])
+        # List of seasons
+        seasons = ["2013-2014", "2014-2015", "2015-2016", "2016-2017", "2017-2018",
+                   "2018-2019", "2019-2020", "2020-2021", "2021-2022", "2022-2023", "2023-2024"]
 
-        with (ssn2014):
-            season = "2013-2014"
-            display_bev_pie_chart(season)
+        # Create tabs for each season
+        tabs = st.tabs(seasons)
 
-        with (ssn2015):
-            season = "2014-2015"
-            display_bev_pie_chart(season)
-
-        with (ssn2016):
-            season = "2015-2016"
-            display_bev_pie_chart(season)
-
-        with (ssn2017):
-            season = "2016-2017"
-            display_bev_pie_chart(season)
-
-        with (ssn2018):
-            season = "2017-2018"
-            display_bev_pie_chart(season)
-
-        with (ssn2019):
-            season = "2018-2019"
-            display_bev_pie_chart(season)
-
-        with (ssn2020):
-            season = "2019-2020"
-            display_bev_pie_chart(season)
-
-        with (ssn2021):
-            season = "2020-2021"
-            display_bev_pie_chart(season)
-
-        with (ssn2022):
-            season = "2021-2022"
-            display_bev_pie_chart(season)
-
-        with (ssn2023):
-            season = "2022-2023"
-            display_bev_pie_chart(season)
-
-        with (ssn2024):
-            season = "2023-2024"
-            display_bev_pie_chart(season)
+        for tab, season in zip(tabs,seasons):
+            with tab:
+                display_bev_pie_chart(season)
 
     with (tab3):
-        # Creating the distribution of bootstrapped means
-        coke_playoff_df = data[(data['SPONSOR'] == 'Coke') & (data['SEED'] > 0)]
-
-        pepsi_playoff_df = data[(data['SPONSOR'] == 'Pepsi') & (data['SEED'] > 0)]
+        # Load data for Coke and Pepsi only once, using cached function
+        pepsi_playoff_df = get_playoff_data('Pepsi')
         avg_pepsi_seed = round(pepsi_playoff_df['SEED'].mean(), 2)
 
         # Adding a title to this tab
@@ -284,23 +230,19 @@ def main():
         # Adding a subheader to select a season
         st.markdown("<h3 style='text-align: center; color: White;'>Select a Confidence Interval: </h3>", unsafe_allow_html=True)
 
-        conf90, conf95, conf97_5, conf99 = st.tabs(["90%", "95%", "97.5%", "99%"])
+        # Define confidence intervals
+        confidence_intervals = [90, 95, 97.5, 99]
+        conf_labels = ["90%", "95%", "97.5%", "99%"]
 
-        with (conf90):
-            conf_int = 90
-            display_bootstrapped_distribution(dist=bootstrap_means, avg_pepsi_seed=avg_pepsi_seed, conf_int=conf_int)
+        # Create tabs for each confidence interval
+        conf_int_tabs = st.tabs(conf_labels)
 
-        with (conf95):
-            conf_int = 95
-            display_bootstrapped_distribution(dist=bootstrap_means, avg_pepsi_seed=avg_pepsi_seed, conf_int=conf_int)
-
-        with (conf97_5):
-            conf_int = 97.5
-            display_bootstrapped_distribution(dist=bootstrap_means, avg_pepsi_seed=avg_pepsi_seed, conf_int=conf_int)
-
-        with (conf99):
-            conf_int = 99
-            display_bootstrapped_distribution(dist=bootstrap_means, avg_pepsi_seed=avg_pepsi_seed, conf_int=conf_int)
+        # Loop through tabs and confidence intervals
+        for conf_tab, conf_int in zip(conf_int_tabs, confidence_intervals):
+            with conf_tab:
+                display_bootstrapped_distribution(dist=bootstrap_means,
+                                                  avg_pepsi_seed=avg_pepsi_seed,
+                                                  conf_int=conf_int)
 
 
 if __name__ == "__main__":
