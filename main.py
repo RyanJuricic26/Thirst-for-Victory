@@ -19,6 +19,12 @@ data_path = 'Data/Complete_Dataset.csv'
 # Loading in data
 data = pd.read_csv(data_path)
 
+# Creating file path for the Boot-Strapped Distribution of Coke School's Mean Seed
+bootstrap_dist_path = 'Data/Bootstrapped_Distribution.npy'
+
+# Loading the distribution
+bootstrap_means = np.load(bootstrap_dist_path)
+
 def create_bootstrapped_distribution(df, num_reps):
     # Use pandas' sample method to generate all bootstraps at once
     # Reshape so each row is one bootstrap sample
@@ -267,9 +273,6 @@ def main():
     with (tab3):
         # Creating the distribution of bootstrapped means
         coke_playoff_df = data[(data['SPONSOR'] == 'Coke') & (data['SEED'] > 0)]
-
-        # Generate 1,000,000 bootstrapped means
-        bootstrap_means = create_bootstrapped_distribution(df=coke_playoff_df, num_reps=1000000)
 
         pepsi_playoff_df = data[(data['SPONSOR'] == 'Pepsi') & (data['SEED'] > 0)]
         avg_pepsi_seed = round(pepsi_playoff_df['SEED'].mean(), 2)
