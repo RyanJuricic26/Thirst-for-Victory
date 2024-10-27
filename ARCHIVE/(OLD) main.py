@@ -181,7 +181,9 @@ def main():
                  "We began by formulating the idea of looking at the annual March Madness Tournament and seeing if "
                  "school's who were sponsored by Coca-Cola or Pepsico had an advantage.")
 
-        st.subheader("Project Process:")
+        st.subheader("Data Collection Process:")
+        # st.write("The Data Collection process was a but different than for most other research projects. "
+        #          "")
         st.write("To begin with, we needed to look at every school that has made the tournament in the since 2014. "
                  "This gave us 10 years of data to work with as due to Covid-19 restrictions there was no tournament "
                  "in 2020. From there we needed to know which beverage company that school had partnered with for the "
