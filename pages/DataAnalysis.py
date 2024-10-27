@@ -1,7 +1,6 @@
 import dash
 from dash import Dash, html, dcc, callback, Output, Input, callback_context
 import dash_bootstrap_components as dbc
-import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
@@ -24,7 +23,7 @@ layout = html.Div(
             [
                 dbc.Col(
                     [
-                        dcc.Markdown('# Project Analysis',
+                        dcc.Markdown('### Project Analysis',
                                      style={'textAlign': 'center'}),
                     ], width = 10
                 )
@@ -65,7 +64,7 @@ layout = html.Div(
 def update_graph(conf_interval):
     template = 'plotly_dark'
     playoff_data = df[df['SEED'] > 0]
-    avg_pepsi_seed = playoff_data[playoff_data['SPONSOR']=='Pepsi']['SEED'].mean()
+    avg_pepsi_seed = round(playoff_data[playoff_data['SPONSOR']=='Pepsi']['SEED'].mean(),2)
     if not conf_interval:
         # Create the histogram for bootstrap_means using Plotly
         fig = go.Figure()
@@ -75,7 +74,7 @@ def update_graph(conf_interval):
             x=dist,
             nbinsx=50,  # Adjust the number of bins
             marker=dict(color='#fe001a'),
-            name='Coke School\'s Boot-Strapped Mean Seed',
+            name='Bootstrapped Distribution of Mean Seed for Coke School\'s',
             )
         )
 
@@ -91,7 +90,7 @@ def update_graph(conf_interval):
 
         # Update the layout to add title, legend, and axes labels
         fig.update_layout(
-            title='Boot-Strapped Means of Coke School\'s Seed',
+            title='Bootstrapped Distribution of Mean Seed for Coke School\'s',
             xaxis_title='Seed',
             yaxis_title='Frequency',
             showlegend=True,
@@ -119,7 +118,7 @@ def update_graph(conf_interval):
             x=dist,
             nbinsx=50,  # Adjust the number of bins
             marker=dict(color='#fe001a'),
-            name='Coke School\'s Boot-Strapped Mean Seed',
+            name='Bootstrapped Distribution of Mean Seed for Coke School\'s',
             )
         )
 
@@ -144,7 +143,7 @@ def update_graph(conf_interval):
 
         # Update the layout to add title, legend, and axes labels
         fig.update_layout(
-            title='Boot-Strapped Means of Coke School\'s Seed',
+            title='Bootstrapped Distribution of Mean Seed for Coke School\'s',
             xaxis_title='Seed',
             yaxis_title='Frequency',
             showlegend=True,

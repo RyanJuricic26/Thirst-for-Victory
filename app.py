@@ -13,7 +13,12 @@ sidebar = dbc.Nav(
     [
         dbc.NavLink(
             [
-                html.Div(page["name"], className='ms-2'),
+                html.Div(page["name"],
+                         className='ms-2',
+                         style={
+                             'fontFamily': 'Old Standard TT',
+                             'fontSize': 20
+                         }),
             ],
             href=page['path'],
             active='exact',
@@ -27,8 +32,18 @@ sidebar = dbc.Nav(
 
 app.layout = dbc.Container([
     dbc.Row([
-        dbc.Col(html.Div("Thirst for Victory",
-                         style={'fontSize': 50, 'textAlign': 'center'}))
+        dbc.Col(
+            [
+                html.Br(),
+                html.Div("Thirst for Victory",
+                    style={
+                        'fontSize': 60,
+                        'textAlign': 'center',
+                        'color': '#FFFFFF',
+                        'fontFamily': 'Old Standard TT'
+                        })
+            ]
+        )
     ]),
 
     html.Hr(),
@@ -47,18 +62,6 @@ app.layout = dbc.Container([
     )
 ], fluid=True)
 
-#         # Framework of the main app
-#         html.Div("Thirst for Victory Project", style={'fontSize':50, 'textAlign': 'center'})
-#         html.Div([
-#             dcc.Link(children=page['name']+"  |  ", href=page['path'])
-#             for page in Dash.page_registry.values()
-#         ]),
-#         html.Hr(),
-#
-#         # content of each page
-#         Dash.page_container
-#     ]
-# )
 
 if __name__ == '__main__':
     app.run(debug=True)
