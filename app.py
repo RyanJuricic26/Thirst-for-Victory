@@ -3,6 +3,8 @@ from dash import Dash, html, dcc, callback, Output, Input, callback_context
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
+import os
+
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.CYBORG],
@@ -64,4 +66,6 @@ app.layout = dbc.Container([
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port, debug=True)
+    # app.run(debug=True)
