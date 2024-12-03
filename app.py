@@ -6,8 +6,10 @@ import pandas as pd
 import os
 
 
+external_stylesheets = [dbc.themes.CYBORG]
+
 app = Dash(__name__,
-           external_stylesheets=[dbc.themes.CYBORG],
+           external_stylesheets=external_stylesheets,
            title='Thirst for Victory',
            use_pages=True)
 
@@ -68,4 +70,3 @@ app.layout = dbc.Container([
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port, debug=True)
-    # app.run(debug=True)

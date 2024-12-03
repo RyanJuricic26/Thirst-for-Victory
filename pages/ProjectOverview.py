@@ -2,7 +2,7 @@ import dash
 from dash import Dash, html, dcc, callback, Output, Input, callback_context
 import dash_bootstrap_components as dbc
 
-dash.register_page(__name__, name='Project Overview')
+dash.register_page(__name__, path='/', name='Project Overview')
 
 layout = html.Div(
     [
@@ -69,9 +69,75 @@ layout = html.Div(
                             within their stadiums for that given year. If they advertised Coca-Cola, and there was no other public
                             information to compare it against, a school was labeled as Coke.
             
-                            This process was repeated for every school in every year that they made the March Madness tournament.
+                            This process was repeated for every school, in every year that they made the March Madness tournament.
                             Whenever available, information on contracts was also added to display any relevant sponsorship details
-                            for subsequent years.
+                            for subsequent years. Such as if a university published their 10 year contract with Pepsi from 2012-2022, 
+                            that was recorded for all subsequent years regardless if they made the tournament in all years. 
+                            """,
+                            style={'textAlign': 'left',
+                                   'fontSize': 18,
+                                   'padding': '10px',
+                                   'fontFamily': 'EB Garamond'}
+                        )
+                    ], width=10
+                )
+            ]
+        ),
+        dbc.Row(
+            [
+                dcc.Markdown('#### Project Findings:',
+                             style={'fontFamily': 'Old Standard TT'})
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dcc.Markdown(
+                            """
+                            This project was initialy completed using only the data from 2024. We wanted to see if there was 
+                            any association in beverage sponsor and how far a team went in the March Madness Tournament. Our 
+                            hypothesis was that there was no significant association and that beverage sponsor was an independent 
+                            variable. The alternate hypothesis was that there was a significant association between the two. 
+
+                            In order to test our hypothesis, we chose to do a Fisher's Exact Test. We chose this due to our very small 
+                            sample size of only 64 teams (For our initial project we did not include the round of 68). We set our 
+                            significance level to 95%. This means a p-value under 0.05 would lead us to reject our null hypothesis 
+                            that there is not a significant association between beverage sponsor and final standings in the March 
+                            Madness Tournament. 
+
+                            Upon running our test over the number of Pepsi and Coke schools in each round for the 2024 March Madness 
+                            Tournament, we calculated a p-value of 0.00282. Since our significance level was set to 95%, our p-value 
+                            is well within the threshold to reject our null hypothesis. 
+
+                            This was our R Code that was ran to perform our Fisher's Exact Test:
+
+                            library(tidyverse)
+                            # 2024
+
+                            # Coke Data
+                            coke <- tibble(
+                            "Sponsor" = c(rep("Coke", 63)),
+                            "Round" = c(rep("R64", 28), rep("R32", 11), rep("N16", 11), rep('N8', 7), rep("N4", 4), rep("N2", 2))
+                            )
+
+                            # Pepsi Data
+                            pepsi <- tibble(
+                            "Sponsor" = c(rep("Pepsi", 63)),
+                            "Round" = c(rep("R64", 36), rep("R32", 21), rep("N16", 5), rep("N8", 1))
+                            )
+
+                            # Combine
+                            total <- bind_rows(coke, pepsi)
+
+                            # Perform Fisher's exact test
+                            fisher_result <- fisher.test(table(total$Sponsor, total$Round))
+
+                            # Print the result
+                            print(fisher_result)
+
+                            Check out the March Madness Tab in order to see the results from 2024's tournament to see how beverage 
+                            sponsorship was distributed through each round!
                             """,
                             style={'textAlign': 'left',
                                    'fontSize': 18,

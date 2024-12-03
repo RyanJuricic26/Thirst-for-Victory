@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 
-dash.register_page(__name__, path='/', name='March Madness') # '/' is home page)
+dash.register_page(__name__, name='March Madness') # '/' is home page)
 
 # Importing Data
 df = pd.read_csv('Data/Complete_Dataset.csv')
