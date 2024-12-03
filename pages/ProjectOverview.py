@@ -112,28 +112,39 @@ layout = html.Div(
 
                             This was our R Code that was ran to perform our Fisher's Exact Test:
 
-                            library(tidyverse)
+                            library(tidyverse) 
                             \\# 2024
 
                             \\# Coke Data
+
                             coke <- tibble(
+
                             "Sponsor" = c(rep("Coke", 63)),
+
                             "Round" = c(rep("R64", 28), rep("R32", 11), rep("N16", 11), rep('N8', 7), rep("N4", 4), rep("N2", 2))
+
                             )
 
                             \\# Pepsi Data
+
                             pepsi <- tibble(
+
                             "Sponsor" = c(rep("Pepsi", 63)),
+
                             "Round" = c(rep("R64", 36), rep("R32", 21), rep("N16", 5), rep("N8", 1))
+
                             )
 
                             \\# Combine
+                            
                             total <- bind_rows(coke, pepsi)
 
                             \\# Perform Fisher's exact test
+
                             fisher_result <- fisher.test(table(total$Sponsor, total$Round))
 
                             \\# Print the result
+
                             print(fisher_result)
 
                             Check out the March Madness Tab in order to see the results from 2024's tournament to see how beverage 
